@@ -9,7 +9,7 @@ import {useSpeechContext} from '@speechly/react-client'
 import {ExpenseTrackerContext} from '../../../context/context'
 import {incomeCategories, expenseCategories} from '../../../constants/category'
 import formatDate from '../../../utils/formatDate'
-
+import CustomizedSnackbar from '../../../components/Snackbar/snackbar'
 
 
 const initialState ={
@@ -24,12 +24,15 @@ const Form = () => {
     const [ formData, setFormData]  = useState(initialState)
     const {addTransaction} = useContext(ExpenseTrackerContext);
     const {segment } = useSpeechContext();
+    const [open, setOpen] = useState(false)
 
     console.log(formData)
     
     const createTransaction = ()=>{
+   //  if (Number.isNaN(Number(formData.amount)) || !formData.date.includes('-')) return;
     const transaction = {...formData, amount: Number(formData.amount), id: uuidv4()} 
-        
+   
+    setOpen(true);
     addTransaction(transaction);
     setFormData(initialState)
        }
@@ -57,9 +60,10 @@ const Form = () => {
                    case 'category':
                        if(incomeCategories.map((iC)=>iC.type).includes(category)){
                         setFormData({...formData, type:'Income',  category})  
-                       } else if(expenseCategories.map((iC)=>iC.type).includes(category)){
+                       } else 
+                       if(expenseCategories.map((eC)=>eC.type).includes(category)){
                         setFormData({...formData, type:'Expense',  category})  
-                     }
+                       }
                        break;
                    case 'date':
                         setFormData({...formData, date: e.value})   
@@ -69,6 +73,10 @@ const Form = () => {
                }
             });
 
+            if(segment.isFinal && formData.amount && formData.category && formData.type && formData.date){
+                createTransaction();
+            }
+
           }
        }, [segment])
 
@@ -76,8 +84,9 @@ const Form = () => {
 
     return (
        <Grid container spacing={2}>
+           <CustomizedSnackbar open={open} setOpen={setOpen}/>
            <Grid item xs={12}>
-               <Typography align="center" variant="subtitle2" gutterButton>
+               <Typography align="center" variant="subtitle2" gutterBottom>
                  {
                      segment && (
                          <>
